@@ -122,9 +122,13 @@ export default async function middleware(req: NextRequest) {
     return finish(NextResponse.redirect(new URL(dest, req.url)))
   }
 
-  // 6) Continue with security headers; pass the nonce to the server render.
+  // 6) Continue with security headers; forward the nonce AND the CSP itself to
+  //    the server render. Next.js reads the nonce from the request CSP header
+  //    and stamps its framework scripts with it — required for 'strict-dynamic'
+  //    to allow the bootstrap chain (see the Next.js CSP guide).
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', csp)
   const res = NextResponse.next({ request: { headers: requestHeaders } })
   return finish(res)
 }
